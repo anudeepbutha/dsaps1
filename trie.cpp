@@ -6,6 +6,7 @@ using namespace std;
 struct Node {
     Node* children[26];
     bool flag = false;
+    int visited = 0;
 };
 
 struct queries {
@@ -41,6 +42,7 @@ void printRecursive (string word, Node* start, vector<string> &suggestion) {
     if (start->flag == true){
         suggestion.push_back(word);
     }
+
     for(int i=0; i<26; i++)
         if (start->children[i] != NULL) {
             char tmp = (char) (i+97);
@@ -54,7 +56,7 @@ void operation2 (string word) {
         if (current->children[ch-'a'] != NULL)
             current = current->children[ch-'a'];
         else {
-            cout << "404";
+            cout << "0" << endl;
             return;
         }
 
@@ -66,24 +68,41 @@ void operation2 (string word) {
         cout << str << endl;
 }
 
-// void operation3 (string word) {
-//     int wordlength = word.length();
-//     vector<int> beforeRow(wordlength+1, 0);
-//     for (int i=0; i<=wordlength; i++)
-//         beforeRow[i] = i;
+void distanceRec(int index, string word, int r, Node* start, string str) {
+    if (r<0 || index > word.length())
+        return;
 
-//     vector<int> currentRow(wordlength+1, 0);
-//     for (int i=0; i<=wordlength; i++)
-//         currentRow[i] = beforeRow[i] + 1;
-    
-//     int insert_cost, delete_cost, replace_cost;
-//     for (int j=0; j<wordlength; j++) {
-//         insert_cost = currentRow[j-1] + 1;
-//         delete_cost = beforeRow[j] + 1;
-//         replace_cost = beforeRow[j-1] + (pattern[j-1] != c ? 1 : 0);
-//         currentRow = min(insert_cost, delete_cost, replace_cost );
-//     }
-// }
+    if (index == word.length() && start->flag == true && start->visited == 0) {
+        start->visited = true;
+        cout << str << endl;
+    }
+
+    for (int i=0; i<26; i++) {
+        if (start->children[i] != NULL) {
+            char tmp = 'a'+i;
+            if (index < word.length() && word[index] == tmp)
+                distanceRec (index+1, word, r, start->children[i], str+tmp);
+            distanceRec (index, word, r-1, start->children[i], str+tmp);
+            distanceRec (index+1, word, r-1, start->children[i], str+tmp);
+        }
+    }
+    distanceRec (index+1, word, r-1, start, str);
+}
+
+void operation3 (string word) {
+    int startIndex = 0, distance = 3;
+    string empty;
+    distanceRec(startIndex, word, distance, root, empty);
+}
+
+void reinitialize(Node *item) {
+    if (item == NULL) return;
+    item->visited = 0;
+    for (int i=0; i<26; i++)
+        if (item->children[i] != 0) {
+            reinitialize(item->children[i]);
+        }
+}
 
 int main() {
     int wordcount, querycount;
@@ -118,8 +137,10 @@ int main() {
             cout << operation1(q.queryword) << endl;
         else if (q.op == 2)
             operation2(q.queryword);
-        // else if (q.op == 3)
-        //     operation3(q.queryword);
+        else if (q.op == 3){
+            operation3(q.queryword);
+            reinitialize(root);
+        }
         else
             cout << "invalid input" << endl;
     return 0;
